@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chest X-ray Classifier</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- ONNX Runtime Web: lets us run the neural network directly in the browser, no server needed -->
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2234;
+    --border: #1e293b;
+    --accent: #38bdf8;
+    --danger: #f87171;
+    --success: #6ee7b7;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .wrapper {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 24px 80px;
+  }
+  header { text-align: center; margin-bottom: 40px; }
+  header h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+  header p.disclaimer {
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .upload-box {
+    display: block;
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    padding: 48px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .upload-box:hover { border-color: var(--accent); background: var(--surface2); }
+  .upload-box span { color: var(--muted); font-size: 14px; }
+  #predictBtn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 13px 36px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #0b0f1a;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  #predictBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+  #status {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .hidden { display: none; }
+  .images-row {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .image-card {
+    flex: 1;
+    min-width: 260px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+  }
+  .image-card h3 { font-size: 13px; color: var(--muted); margin-bottom: 10px; font-weight: 500; }
+  .image-card img, .image-card canvas { width: 100%; border-radius: 8px; }
+  .verdict {
+    margin-top: 24px;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 17px;
+  }
+  .verdict.abnormal { background: rgba(248,113,113,0.12); color: var(--danger); border: 1px solid rgba(248,113,113,0.25); }
+  .verdict.normal { background: rgba(110,231,183,0.12); color: var(--success); border: 1px solid rgba(110,231,183,0.25); }
+  .confidences {
+    margin-top: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .confidence-row { margin-bottom: 14px; }
+  .confidence-row:last-child { margin-bottom: 0; }
+  .confidence-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .confidence-bar-bg { background: var(--border); border-radius: 6px; height: 8px; overflow: hidden; }
+  .confidence-bar-fill { background: var(--accent); height: 100%; transition: width 0.5s ease; }
+  footer { text-align: center; margin-top: 40px; color: var(--muted); font-size: 12px; }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <header>
+    <h1>🫁 Chest X-ray Classifier</h1>
+    <p class="disclaimer">
+      Runs 100% in your browser — no data ever leaves your device.
+      Research/educational prototype, not a diagnostic device.
+    </p>
+  </header>
+
+  <label for="fileInput" class="upload-box" id="uploadBox">
+    <span id="uploadText">Click to upload a chest X-ray (PNG/JPG)</span>
+    <input type="file" id="fileInput" accept="image/png, image/jpeg" hidden>
+  </label>
+  <button id="predictBtn" disabled>Analyze X-ray</button>
+  <div id="status"></div>
+
+  <section id="results" class="hidden">
+    <div class="images-row">
+      <div class="image-card">
+        <h3>UPLOADED IMAGE</h3>
+        <img id="originalImage" src="" alt="Uploaded X-ray">
+      </div>
+    </div>
+    <div id="verdict" class="verdict"></div>
+    <div class="confidences" id="confidences"></div>
+  </section>
+
+  <footer>Model runs client-side via ONNX Runtime Web. ResNet50, fine-tuned on the COVID-19 Radiography Database.</footer>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
