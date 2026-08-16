@@ -79,8 +79,6 @@ async function preprocessImage(file) {
   const imageData = ctx.getImageData(0, 0, 224, 224);
   const { data } = imageData; // RGBA, 0-255
 
-  // Convert to CHW format (channels, height, width) as float32,
-  // normalized using ImageNet mean/std -- same as the Python training pipeline.
   const floatData = new Float32Array(3 * 224 * 224);
   const numPixels = 224 * 224;
 
@@ -89,9 +87,9 @@ async function preprocessImage(file) {
     const g = data[i * 4 + 1] / 255;
     const b = data[i * 4 + 2] / 255;
 
-    floatData[i] = (r - IMAGENET_MEAN[0]) / IMAGENET_STD[0];               // R channel
-    floatData[numPixels + i] = (g - IMAGENET_MEAN[1]) / IMAGENET_STD[1];   // G channel
-    floatData[2 * numPixels + i] = (b - IMAGENET_MEAN[2]) / IMAGENET_STD[2]; // B channel
+    floatData[i] = (r - IMAGENET_MEAN[0]) / IMAGENET_STD[0];
+    floatData[numPixels + i] = (g - IMAGENET_MEAN[1]) / IMAGENET_STD[1];
+    floatData[2 * numPixels + i] = (b - IMAGENET_MEAN[2]) / IMAGENET_STD[2];
   }
 
   return new ort.Tensor("float32", floatData, [1, 3, 224, 224]);
