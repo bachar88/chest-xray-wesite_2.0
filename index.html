@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chest X-ray Classifier</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 <style>
   :root {
@@ -13,69 +13,162 @@
     --surface2: #1a2234;
     --border: #1e293b;
     --accent: #38bdf8;
+    --accent2: #a78bfa;
     --danger: #f87171;
     --success: #6ee7b7;
     --text: #e2e8f0;
     --muted: #64748b;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
   body {
     font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(56,189,248,0.10), transparent 40%),
+      radial-gradient(circle at 80% 85%, rgba(167,139,250,0.10), transparent 40%);
+    background-attachment: fixed;
+    overflow-x: hidden;
   }
+
+  .orb {
+    position: fixed;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(56,189,248,0.10), transparent 70%);
+    top: -150px;
+    right: -150px;
+    animation: float 12s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb.two {
+    background: radial-gradient(circle, rgba(167,139,250,0.10), transparent 70%);
+    top: auto;
+    bottom: -200px;
+    left: -200px;
+    right: auto;
+    animation-duration: 16s;
+    animation-delay: -4s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-30px, 40px) scale(1.08); }
+  }
+
   .wrapper {
+    position: relative;
+    z-index: 1;
     max-width: 720px;
     margin: 0 auto;
-    padding: 56px 24px 80px;
+    padding: 64px 24px 90px;
   }
-  header { text-align: center; margin-bottom: 40px; }
+
+  .fade-up {
+    opacity: 0;
+    transform: translateY(18px);
+    animation: fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.15s; }
+  .delay-3 { animation-delay: 0.25s; }
+
+  header { text-align: center; margin-bottom: 44px; }
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    background: rgba(56,189,248,0.08);
+    border: 1px solid rgba(56,189,248,0.2);
+    padding: 5px 14px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
   header h1 {
     font-family: 'Syne', sans-serif;
     font-weight: 800;
-    font-size: 28px;
-    margin-bottom: 10px;
+    font-size: clamp(28px, 5vw, 36px);
+    margin-bottom: 12px;
+    background: linear-gradient(120deg, #f1f5f9, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
   header p.disclaimer {
     color: var(--muted);
-    font-size: 13px;
+    font-size: 13.5px;
     max-width: 480px;
     margin: 0 auto;
+    line-height: 1.6;
   }
+  header p.scope {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--accent2);
+  }
+
   .upload-box {
     display: block;
     border: 2px dashed var(--border);
-    border-radius: 16px;
+    border-radius: 18px;
     background: var(--surface);
-    padding: 48px 20px;
+    padding: 52px 20px;
     text-align: center;
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
   }
-  .upload-box:hover { border-color: var(--accent); background: var(--surface2); }
-  .upload-box span { color: var(--muted); font-size: 14px; }
+  .upload-box:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateY(-2px);
+  }
+  .upload-box span { color: var(--muted); font-size: 14.5px; }
+  .upload-box .icon {
+    display: block;
+    font-size: 28px;
+    margin-bottom: 10px;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
   #predictBtn {
     display: block;
-    margin: 20px auto 0;
-    padding: 13px 36px;
+    margin: 22px auto 0;
+    padding: 14px 40px;
     border: none;
-    border-radius: 10px;
-    background: var(--accent);
+    border-radius: 12px;
+    background: linear-gradient(120deg, var(--accent), var(--accent2));
     color: #0b0f1a;
     font-weight: 700;
     font-size: 15px;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 8px 24px rgba(56,189,248,0.18);
   }
-  #predictBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+  #predictBtn:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; }
+  #predictBtn:not(:disabled):hover { transform: translateY(-2px); }
+  #predictBtn:not(:disabled):active { transform: translateY(0); }
+
   #status {
     text-align: center;
     margin-top: 20px;
     color: var(--muted);
-    font-size: 14px;
+    font-size: 13.5px;
+    min-height: 18px;
   }
   .hidden { display: none; }
+
   .images-row {
     display: flex;
     gap: 16px;
@@ -87,72 +180,100 @@
     min-width: 260px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: 16px;
     padding: 16px;
     text-align: center;
   }
-  .image-card h3 { font-size: 13px; color: var(--muted); margin-bottom: 10px; font-weight: 500; }
-  .image-card img, .image-card canvas { width: 100%; border-radius: 8px; }
+  .image-card h3 { font-size: 12.5px; color: var(--muted); margin-bottom: 10px; font-weight: 600; letter-spacing: 0.03em; }
+  .image-card img, .image-card canvas { width: 100%; border-radius: 10px; display: block; }
+
   .verdict {
     margin-top: 24px;
-    padding: 18px;
-    border-radius: 12px;
+    padding: 20px;
+    border-radius: 14px;
     text-align: center;
     font-weight: 700;
     font-size: 17px;
+    transition: transform 0.2s ease;
   }
-  .verdict.abnormal { background: rgba(248,113,113,0.12); color: var(--danger); border: 1px solid rgba(248,113,113,0.25); }
-  .verdict.normal { background: rgba(110,231,183,0.12); color: var(--success); border: 1px solid rgba(110,231,183,0.25); }
+  .verdict.abnormal { background: rgba(248,113,113,0.10); color: var(--danger); border: 1px solid rgba(248,113,113,0.22); }
+  .verdict.normal { background: rgba(110,231,183,0.10); color: var(--success); border: 1px solid rgba(110,231,183,0.22); }
+
   .confidences {
     margin-top: 24px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
+    border-radius: 16px;
+    padding: 22px;
   }
-  .confidence-row { margin-bottom: 14px; }
+  .confidence-row { margin-bottom: 16px; }
   .confidence-row:last-child { margin-bottom: 0; }
   .confidence-label {
     display: flex;
     justify-content: space-between;
     font-size: 13px;
-    margin-bottom: 6px;
+    margin-bottom: 7px;
+    color: #cbd5e1;
   }
-  .confidence-bar-bg { background: var(--border); border-radius: 6px; height: 8px; overflow: hidden; }
-  .confidence-bar-fill { background: var(--accent); height: 100%; transition: width 0.5s ease; }
-  footer { text-align: center; margin-top: 40px; color: var(--muted); font-size: 12px; }
+  .confidence-bar-bg { background: var(--border); border-radius: 8px; height: 9px; overflow: hidden; }
+  .confidence-bar-fill {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    height: 100%;
+    width: 0%;
+    border-radius: 8px;
+    transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 48px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
 </style>
 </head>
 <body>
 
+<div class="orb"></div>
+<div class="orb two"></div>
+
 <div class="wrapper">
-  <header>
+  <header class="fade-up">
+    <span class="badge">RUNS FULLY IN-BROWSER</span>
     <h1>🫁 Chest X-ray Classifier</h1>
     <p class="disclaimer">
-      Runs 100% in your browser — no data ever leaves your device.
+      No data ever leaves your device — the model runs entirely on your browser.
       Research/educational prototype, not a diagnostic device.
     </p>
+    <p class="scope">Currently trained to detect 3 disease classes (COVID-19, Lung Opacity, Viral Pneumonia) vs. Normal.</p>
   </header>
 
-  <label for="fileInput" class="upload-box" id="uploadBox">
-    <span id="uploadText">Click to upload a chest X-ray (PNG/JPG)</span>
-    <input type="file" id="fileInput" accept="image/png, image/jpeg" hidden>
-  </label>
-  <button id="predictBtn" disabled>Analyze X-ray</button>
-  <div id="status"></div>
+  <div class="fade-up delay-1">
+    <label for="fileInput" class="upload-box" id="uploadBox">
+      <span class="icon">📤</span>
+      <span id="uploadText">Click to upload a chest X-ray (PNG/JPG)</span>
+      <input type="file" id="fileInput" accept="image/png, image/jpeg" hidden>
+    </label>
+    <button id="predictBtn" disabled>Analyze X-ray</button>
+    <div id="status"></div>
+  </div>
 
   <section id="results" class="hidden">
-    <div class="images-row">
+    <div class="images-row fade-up">
       <div class="image-card">
         <h3>UPLOADED IMAGE</h3>
         <img id="originalImage" src="" alt="Uploaded X-ray">
       </div>
     </div>
-    <div id="verdict" class="verdict"></div>
-    <div class="confidences" id="confidences"></div>
+    <div id="verdict" class="verdict fade-up delay-1"></div>
+    <div class="confidences fade-up delay-2" id="confidences"></div>
   </section>
 
-  <footer>Model runs client-side via ONNX Runtime Web. ResNet50, fine-tuned on the COVID-19 Radiography Database.</footer>
+  <footer class="fade-up delay-3">
+    Model runs client-side via ONNX Runtime Web.<br>
+    ResNet50, fine-tuned on the COVID-19 Radiography Database.
+  </footer>
 </div>
 
 <script src="script.js"></script>
