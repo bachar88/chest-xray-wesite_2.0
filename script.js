@@ -4,7 +4,7 @@
 // on the visitor's device. No backend server needed at all.
 // ═══════════════════════════════════════════════
 
-const MODEL_URL = "chest_xray_model.onnx"; // place this file next to index.html
+const MODEL_URL = "https://huggingface.co/bach88/chest_xray_2.0/resolve/main/chest_xray_model_single.onnx";
 const CLASS_NAMES = ["COVID", "Lung_Opacity", "Normal", "Viral_Pneumonia"]; // must match training order!
 const IMAGENET_MEAN = [0.485, 0.456, 0.406];
 const IMAGENET_STD = [0.229, 0.224, 0.225];
